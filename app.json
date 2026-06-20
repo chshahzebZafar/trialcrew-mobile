@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "TrialCrew",
+    "slug": "trialcrew-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "trialcrew",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F6FA"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.trialcrew.mobile"
+    },
+    "android": {
+      "package": "app.trialcrew.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F6FA"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-notifications",
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "tsconfigPaths": true
+    }
+  }
+}
