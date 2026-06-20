@@ -13,6 +13,15 @@ export type Api = typeof mockApi;
 
 const useBackend = process.env.EXPO_PUBLIC_USE_BACKEND === "true";
 
+// DEV: make the active data source impossible to misread on startup.
+if (__DEV__) {
+  console.log(
+    useBackend
+      ? `[api] data source: BACKEND → ${process.env.EXPO_PUBLIC_API_URL ?? "(no API_URL!)"}`
+      : "[api] data source: MOCK (demo data) — EXPO_PUBLIC_USE_BACKEND is not 'true' in this bundle",
+  );
+}
+
 // Lazy-require the real client only when enabled, so the mock build never pulls it in.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 export const api: Api = useBackend

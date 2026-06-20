@@ -181,6 +181,7 @@ export function useSubmitApp() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: SubmitAppInput) => api.submitApp(input),
+    meta: { localError: true }, // shows an inline error on the form instead of the global alert
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.founderApps });
       qc.invalidateQueries({ queryKey: qk.founderStats });

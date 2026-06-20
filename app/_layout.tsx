@@ -61,7 +61,7 @@ function RootNavigator() {
       />
       <Stack.Screen
         name="submit-app"
-        options={{ headerShown: true, title: "New app", presentation: "modal", headerStyle: { backgroundColor: colors.bg }, headerTintColor: colors.ink, headerShadowVisible: false }}
+        options={{ headerShown: false, presentation: "modal" }}
       />
       <Stack.Screen
         name="notifications"

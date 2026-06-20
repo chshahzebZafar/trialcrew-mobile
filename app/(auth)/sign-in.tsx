@@ -103,6 +103,8 @@ function ClerkSignIn() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pending, setPending] = useState(false); // waiting on an email verification code
+  const [code, setCode] = useState("");
 
   const submit = async () => {
     const next: typeof errors = {};
@@ -115,12 +117,43 @@ function ClerkSignIn() {
     setLoading(true);
     try {
       const res = await signIn.create({ identifier: email, password });
+      // DIAGNOSTIC: dump exactly what Clerk wants so we stop guessing.
+      console.log("[signIn] status =", res.status);
+      console.log("[signIn] firstFactors =", JSON.stringify(res.supportedFirstFactors ?? null));
+      console.log("[signIn] secondFactors =", JSON.stringify(res.supportedSecondFactors ?? null));
+
       if (res.status === "complete") {
         await setActive({ session: res.createdSessionId });
         await syncAfterSignIn();
-        // Root gate redirects into (tabs).
+        return; // Root gate redirects into (tabs).
+      }
+      // Clerk wants an email verification code as the first factor → switch to code entry.
+      const emailFactor = res.supportedFirstFactors?.find((f) => f.strategy === "email_code");
+      if (emailFactor && "emailAddressId" in emailFactor) {
+        await signIn.prepareFirstFactor({ strategy: "email_code", emailAddressId: emailFactor.emailAddressId });
+        setPending(true);
+        return;
+      }
+      setFormError(`Sign-in returned status: ${res.status}. Tell the dev this exact value.`);
+    } catch (e) {
+      console.log("[signIn] threw:", JSON.stringify(e));
+      setFormError(clerkErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verify = async () => {
+    if (!isLoaded) return;
+    setFormError(null);
+    setLoading(true);
+    try {
+      const res = await signIn.attemptFirstFactor({ strategy: "email_code", code });
+      if (res.status === "complete") {
+        await setActive({ session: res.createdSessionId });
+        await syncAfterSignIn();
       } else {
-        setFormError("Additional verification is required to sign in.");
+        setFormError("That code didn't work — try again.");
       }
     } catch (e) {
       setFormError(clerkErrorMessage(e));
@@ -128,6 +161,30 @@ function ClerkSignIn() {
       setLoading(false);
     }
   };
+
+  if (pending) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.porcelain }}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <ScrollView contentContainerStyle={{ padding: 24, gap: 28, flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+            <View className="pt-6">
+              <AuthBrand tagline={`Enter the 6-digit code we sent to ${email}.`} />
+            </View>
+            <View className="gap-4">
+              <TextField label="Verification code" placeholder="123456" keyboardType="number-pad" autoComplete="one-time-code" value={code} onChangeText={setCode} />
+              {formError && <Text className="font-body text-[13px]" style={{ color: colors.danger }}>{formError}</Text>}
+            </View>
+            <View className="mt-auto gap-3">
+              <PrimaryButton label="Verify & sign in" onPress={verify} loading={loading} />
+              <Pressable className="self-center" hitSlop={8} onPress={() => { setPending(false); setCode(""); setFormError(null); }}>
+                <Text className="font-inter-medium text-[13px]" style={{ color: colors.slate }}>Back</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   return <SignInView email={email} setEmail={setEmail} password={password} setPassword={setPassword} errors={errors} formError={formError} loading={loading} onSubmit={submit} />;
 }

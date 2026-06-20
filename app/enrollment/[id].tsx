@@ -1,4 +1,5 @@
 import { ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { useEnrollment, useRateEnrollment } from "@/api/hooks";
 import { colors } from "@/theme/tokens";
@@ -30,8 +31,9 @@ export default function EnrollmentDetail() {
   const canRate = e.status === "COMPLETED" && !e.rated;
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }}>
-      {/* Header */}
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }} showsVerticalScrollIndicator={false}>
+        {/* Header */}
       <View className="flex-row items-center gap-3">
         <View
           className="h-14 w-14 items-center justify-center rounded-2xl"
@@ -121,6 +123,7 @@ export default function EnrollmentDetail() {
           <Text className="font-body text-[13px]" style={{ color: colors.slate }}>Rated · reliability recorded</Text>
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

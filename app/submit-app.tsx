@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useSubmitApp } from "@/api/hooks";
+import { apiErrorMessage } from "@/api/config";
 import { colors } from "@/theme/tokens";
 import { TextField } from "@/components/TextField";
+import { FormScroll } from "@/components/FormScroll";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { PressableScale } from "@/components/PressableScale";
 import { Icon } from "@/components/Icon";
 import { rewardMeta } from "@/components/Reward";
 import type { RewardType } from "@/types";
@@ -23,6 +27,7 @@ export default function SubmitApp() {
   const [playStoreUrl, setPlayStoreUrl] = useState("");
   const [reward, setReward] = useState<RewardType>("PREMIUM_ACCESS");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
 
   const onSubmit = async () => {
     const next: Record<string, string> = {};
@@ -31,30 +36,49 @@ export default function SubmitApp() {
       next.packageName = "e.g. com.yourcompany.app";
     if (vertical.trim().length < 2) next.vertical = "What field is it for?";
     if (feedbackFocus.trim().length < 3) next.feedbackFocus = "What should testers focus on?";
+
+    // Optional Play Store link: auto-add https:// if the scheme is missing, then sanity-check it.
+    const raw = playStoreUrl.trim();
+    const url = raw ? (/^https?:\/\//i.test(raw) ? raw : `https://${raw}`) : undefined;
+    if (url && !/^https?:\/\/[^\s.]+\.[^\s]{2,}/i.test(url))
+      next.playStoreUrl = "Enter a valid link, e.g. https://play.google.com/...";
+
     setErrors(next);
     if (Object.keys(next).length) return;
 
-    await submit.mutateAsync({
-      name,
-      packageName,
-      vertical,
-      feedbackFocus,
-      description: description || undefined,
-      playStoreUrl: playStoreUrl || undefined,
-      rewardType: reward,
-    });
-    router.back();
+    setFormError(null);
+    try {
+      await submit.mutateAsync({
+        name: name.trim(),
+        packageName: packageName.trim(),
+        vertical: vertical.trim(),
+        feedbackFocus: feedbackFocus.trim(),
+        description: description.trim() || undefined,
+        playStoreUrl: url,
+        rewardType: reward,
+      });
+      router.back();
+    } catch (e) {
+      setFormError(apiErrorMessage(e, "Couldn't create the app. Please check your details and try again."));
+    }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Custom header — safe-area aware, tappable back with press feedback */}
+      <View className="flex-row items-center px-5 pb-1 pt-2">
+        <PressableScale onPress={() => router.back()}>
+          <View
+            className="h-10 w-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}
+          >
+            <Icon name="arrow-left" size={20} color={colors.ink} />
+          </View>
+        </PressableScale>
+      </View>
+      <FormScroll
+        backgroundColor={colors.bg}
+        contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 18, paddingBottom: 40 }}
       >
         <View className="gap-1.5">
           <Text className="font-display text-[24px]" style={{ color: colors.ink, letterSpacing: -0.6 }}>
@@ -71,6 +95,7 @@ export default function SubmitApp() {
             label="Package name"
             placeholder="com.yourcompany.app"
             autoCapitalize="none"
+            autoCorrect={false}
             value={packageName}
             onChangeText={setPackageName}
             error={errors.packageName}
@@ -97,11 +122,13 @@ export default function SubmitApp() {
           />
           <TextField
             label="Play Store URL (optional)"
-            placeholder="https://play.google.com/..."
+            placeholder="play.google.com/store/apps/..."
             autoCapitalize="none"
+            autoCorrect={false}
             keyboardType="url"
             value={playStoreUrl}
             onChangeText={setPlayStoreUrl}
+            error={errors.playStoreUrl}
           />
         </View>
 
@@ -151,6 +178,11 @@ export default function SubmitApp() {
           </Text>
         </View>
 
+        {formError && (
+          <Text className="font-body text-[13px]" style={{ color: colors.danger }}>
+            {formError}
+          </Text>
+        )}
         <PrimaryButton
           label="Create draft app"
           variant="accent"
@@ -158,7 +190,7 @@ export default function SubmitApp() {
           onPress={onSubmit}
           loading={submit.isPending}
         />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </FormScroll>
+    </SafeAreaView>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
+import { Pressable, Share, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   useBroadcasts,
@@ -16,6 +17,7 @@ import { BadgePill } from "@/components/Badge";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Card, Divider } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { FormScroll } from "@/components/FormScroll";
 import { PressableScale } from "@/components/PressableScale";
 import { Screen, EmptyState } from "@/components/Screen";
 import { founderStatusMeta } from "@/components/FounderAppCard";
@@ -116,15 +118,20 @@ export default function CampaignDetail() {
     publish.mutate({ minTesters: target, startDate: new Date(Date.now() + startDays * DAY).toISOString() });
 
   const doExport = async () => {
-    const emails = await exportEmails.mutateAsync();
-    await Share.share({
-      message: `TrialCrew · ${app.name} — tester Gmails for Play Console:\n\n${emails.join("\n")}`,
-    });
+    try {
+      const emails = await exportEmails.mutateAsync();
+      await Share.share({
+        message: `TrialCrew · ${app.name} — tester Gmails for Play Console:\n\n${emails.join("\n")}`,
+      });
+    } catch {
+      // Swallowed so it can't crash; the global mutation handler surfaces the alert.
+    }
   };
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }}>
-      {/* Header */}
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <FormScroll contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }}>
+        {/* Header */}
       <View className="flex-row items-center gap-3">
         <AppLogo name={app.name} size={52} />
         <View className="flex-1">
@@ -300,6 +307,7 @@ export default function CampaignDetail() {
           </View>
         </>
       )}
-    </ScrollView>
+      </FormScroll>
+    </SafeAreaView>
   );
 }

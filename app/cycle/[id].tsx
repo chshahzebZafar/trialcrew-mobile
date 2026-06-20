@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
+import { FormScroll } from "@/components/FormScroll";
 import {
   useBroadcasts,
   useClaimReward,
@@ -101,6 +102,8 @@ export default function CycleDetail() {
       if (!img) return;
       const url = await uploadProof(img, cycleId);
       await submitProof.mutateAsync(url);
+    } catch {
+      // Swallowed here so it can't crash; the global mutation handler surfaces the alert.
     } finally {
       setProofLoading(false);
     }
@@ -150,8 +153,8 @@ export default function CycleDetail() {
   };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.porcelain }}
+    <FormScroll
+      backgroundColor={colors.porcelain}
       contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 48 }}
     >
       {/* Header */}
@@ -537,6 +540,6 @@ export default function CycleDetail() {
           </Text>
         </Section>
       ) : null}
-    </ScrollView>
+    </FormScroll>
   );
 }
