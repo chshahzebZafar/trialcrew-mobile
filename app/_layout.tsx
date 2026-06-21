@@ -67,6 +67,7 @@ function RootNavigator() {
         name="notifications"
         options={{ headerShown: true, title: "Notifications", headerStyle: { backgroundColor: colors.bg }, headerTintColor: colors.ink, headerShadowVisible: false }}
       />
+      <Stack.Screen name="edit-profile" options={{ headerShown: false, presentation: "modal" }} />
     </Stack>
   );
 }

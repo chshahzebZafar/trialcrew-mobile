@@ -33,6 +33,17 @@ export function useProfile() {
   return useQuery({ queryKey: qk.profile, queryFn: api.getProfile });
 }
 
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name?: string; vertical?: string; categories?: string[]; bio?: string }) => api.updateProfile(input),
+    onSuccess: (p) => {
+      qc.setQueryData(qk.profile, p);
+      qc.invalidateQueries({ queryKey: qk.browse }); // interests affect app matching
+    },
+  });
+}
+
 export function useNotifications() {
   return useQuery({ queryKey: qk.notifications, queryFn: api.getNotifications });
 }

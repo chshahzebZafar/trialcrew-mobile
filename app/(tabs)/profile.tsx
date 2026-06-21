@@ -1,11 +1,13 @@
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useFounderStats, useProfile } from "@/api/hooks";
 import { useAuth } from "@/lib/auth";
 import { useRole } from "@/stores/roleStore";
 import { colors } from "@/theme/tokens";
 import { BadgePill, nextTierProgress } from "@/components/Badge";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { PressableScale } from "@/components/PressableScale";
 import { Card, Chip, Divider } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { Entrance } from "@/components/Motion";
@@ -40,6 +42,7 @@ export default function ProfileScreen() {
   const { data: fStats } = useFounderStats();
   const { signOut } = useAuth();
   const role = useRole();
+  const router = useRouter();
   const isFounder = role === "FOUNDER";
 
   if (isLoading || !profile) {
@@ -82,6 +85,14 @@ export default function ProfileScreen() {
             </View>
           </View>
         </Entrance>
+
+        {/* Edit profile */}
+        <PressableScale onPress={() => router.push("/edit-profile")}>
+          <View className="flex-row items-center justify-center gap-2 rounded-xl py-2.5" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}>
+            <Icon name="edit-3" size={15} color={colors.ink} />
+            <Text className="font-body-semibold text-[14px]" style={{ color: colors.ink }}>Edit profile</Text>
+          </View>
+        </PressableScale>
 
         {/* Role switch */}
         <Entrance index={1}>

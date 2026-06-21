@@ -154,6 +154,14 @@ export const mockApi = {
     return delay(clone(profile));
   },
 
+  updateProfile(input: { name?: string; vertical?: string; categories?: string[]; bio?: string }): Promise<TesterProfile> {
+    if (input.name !== undefined) profile.name = input.name;
+    if (input.vertical !== undefined) profile.vertical = input.vertical;
+    if (input.categories !== undefined) profile.categories = input.categories;
+    if (input.bio !== undefined) profile.bio = input.bio;
+    return delay(clone(profile));
+  },
+
   setPushToken(_token: string): Promise<{ ok: true }> {
     return delay({ ok: true } as const);
   },

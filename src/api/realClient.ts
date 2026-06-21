@@ -32,6 +32,7 @@ async function orNull<T>(p: Promise<T>): Promise<T | null> {
 export const realApi: Api = {
   // ── Tester ──
   getProfile: () => http<TesterProfile>("/me/profile"),
+  updateProfile: (input) => http<TesterProfile>("/me/profile", { method: "PATCH", json: input }),
   getFeedbackQuestions: () => http<FeedbackQuestion[]>("/feedback/questions"),
   setPushToken: (token) => http<{ ok: true }>("/me/push-token", { json: { token } }),
   setRole: (isFounder, isProfessional) => http<{ ok: true }>("/me/role", { json: { isFounder, isProfessional } }),
