@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, View, type ScrollViewProps, type StyleProp, type ViewStyle } from "react-native";
 
 const isIOS = Platform.OS === "ios";
 
@@ -17,11 +17,13 @@ export function FormScroll({
   contentContainerStyle,
   backgroundColor,
   keyboardVerticalOffset = 0,
+  refreshControl,
 }: {
   children: ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
   backgroundColor?: string;
   keyboardVerticalOffset?: number;
+  refreshControl?: ScrollViewProps["refreshControl"];
 }) {
   const scroll = (
     <ScrollView
@@ -30,6 +32,7 @@ export function FormScroll({
       keyboardDismissMode="interactive"
       automaticallyAdjustKeyboardInsets={isIOS}
       showsVerticalScrollIndicator={false}
+      refreshControl={refreshControl}
     >
       {children}
     </ScrollView>

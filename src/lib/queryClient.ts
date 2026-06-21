@@ -13,9 +13,12 @@ export const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
+      staleTime: 15_000,
       retry: 1,
-      refetchOnWindowFocus: false,
+      // Refetch when the app returns to the foreground (wired via AppState in app/_layout.tsx)
+      // so changes made on another device show up without a manual reload.
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
     },
   },
 });

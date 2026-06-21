@@ -61,10 +61,9 @@ export default function Onboarding() {
 
   const next = () => {
     if (isLast) return finish();
-    listRef.current?.scrollToOffset({
-      offset: (index + 1) * width,
-      animated: true,
-    });
+    const ni = index + 1;
+    setIndex(ni); // update dots/CTA immediately, don't wait for the scroll event
+    listRef.current?.scrollToIndex({ index: ni, animated: true });
   };
 
   return (
@@ -90,6 +89,7 @@ export default function Onboarding() {
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         renderItem={({ item }) => (
           <View style={{ width }} className="flex-1 items-center px-8 pt-6">
             <View className="flex-1 items-center justify-center">

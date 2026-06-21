@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Pressable, Share, Text, TextInput, View } from "react-native";
+import { Pressable, RefreshControl, Share, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   useBroadcasts,
@@ -104,6 +105,14 @@ export default function CampaignDetail() {
   const [target, setTarget] = useState(16);
   const [startDays, setStartDays] = useState(0);
   const [message, setMessage] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const qc = useQueryClient();
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await qc.invalidateQueries();
+    setRefreshing(false);
+  };
 
   if (isLoading) return <Screen>{null}</Screen>;
   if (!app) return <Screen><EmptyState message="App not found." /></Screen>;
@@ -130,7 +139,10 @@ export default function CampaignDetail() {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <FormScroll contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }}>
+      <FormScroll
+        contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.indigo} colors={[colors.indigo]} />}
+      >
         {/* Header */}
       <View className="flex-row items-center gap-3">
         <AppLogo name={app.name} size={52} />
@@ -231,10 +243,15 @@ export default function CampaignDetail() {
               </View>
             )}
 
-            {ready ? (
+            {(enrolls?.length ?? 0) > 0 ? (
               <View className="gap-3">
-                <PrimaryButton label="Export tester emails" variant="primary" icon="download" onPress={doExport} loading={exportEmails.isPending} />
-                {app.status === "ENROLLING" && (
+                <PrimaryButton label={`Export ${enrolls?.length} tester email${(enrolls?.length ?? 0) === 1 ? "" : "s"}`} variant="primary" icon="download" onPress={doExport} loading={exportEmails.isPending} />
+                {!ready && (
+                  <Text className="font-body text-[12px]" style={{ color: colors.slate }}>
+                    {remaining} more to reach your target of {app.minTesters} — but you can export the Gmails you have now.
+                  </Text>
+                )}
+                {ready && app.status === "ENROLLING" && (
                   <PrimaryButton label="Mark invited & start test" variant="accent" icon="check" onPress={() => invite.mutate()} loading={invite.isPending} />
                 )}
                 <View className="flex-row items-start gap-2 rounded-xl p-3" style={{ backgroundColor: colors.indigoSoft }}>
@@ -246,7 +263,7 @@ export default function CampaignDetail() {
               </View>
             ) : (
               <Text className="font-body text-[13px]" style={{ color: colors.slate }}>
-                Emails unlock for export once your target of {app.minTesters} testers enrol.
+                No testers yet — Gmails will appear here to export as testers enrol.
               </Text>
             )}
           </Card>

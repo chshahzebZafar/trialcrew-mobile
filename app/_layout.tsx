@@ -1,11 +1,11 @@
 import "../global.css";
 
 import { useEffect } from "react";
-import { View } from "react-native";
+import { AppState, View, type AppStateStatus } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, focusManager } from "@tanstack/react-query";
 import {
   HankenGrotesk_400Regular,
   HankenGrotesk_500Medium,
@@ -94,6 +94,15 @@ export default function RootLayout() {
     HankenGrotesk_600SemiBold,
     HankenGrotesk_700Bold,
   });
+
+  // Tell React Query the app is "focused" when it returns to the foreground → refetch stale data
+  // (so changes from another device appear when you switch back to the app).
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (status: AppStateStatus) => {
+      focusManager.setFocused(status === "active");
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!fontsLoaded) return null;
 

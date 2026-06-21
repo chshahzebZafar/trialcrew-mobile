@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { RefreshControl, Text, TextInput, View } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { FormScroll } from "@/components/FormScroll";
 import {
@@ -85,6 +86,21 @@ export default function CycleDetail() {
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const qc = useQueryClient();
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await qc.invalidateQueries();
+    setRefreshing(false);
+  };
+
+  // Live clock so the "next check-in" countdown ticks down.
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   if (isLoading) return <Screen>{null}</Screen>;
   if (!cycle) {
@@ -135,6 +151,9 @@ export default function CycleDetail() {
     : 0;
   const dailyDone = cycle.dailyCheckIns.filter((d) => d.doneAt).length;
   const todayDone = !!cycle.dailyCheckIns.find((d) => d.day === today)?.doneAt;
+  const _next = new Date(now); _next.setHours(24, 0, 0, 0);
+  const _ms = Math.max(0, _next.getTime() - now);
+  const nextCheckIn = `${Math.floor(_ms / 3600000)}h ${Math.floor((_ms % 3600000) / 60000)}m`;
   const integrity = evaluateIntegrity(cycle.dailyCheckIns, today);
   const reward = rewardMeta[cycle.campaign.rewardType];
 
@@ -156,6 +175,7 @@ export default function CycleDetail() {
     <FormScroll
       backgroundColor={colors.porcelain}
       contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 48 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.indigo} colors={[colors.indigo]} />}
     >
       {/* Header */}
       <View className="gap-2">
@@ -393,10 +413,15 @@ export default function CycleDetail() {
           </View>
 
           {todayDone ? (
-            <View className="flex-row items-center justify-center gap-1.5 rounded-xl py-3" style={{ backgroundColor: colors.positiveSoft }}>
-              <Icon name="check-circle" size={16} color={colors.positive} />
-              <Text className="font-body-semibold text-[14px]" style={{ color: colors.positive }}>
-                Confirmed for today — see you tomorrow
+            <View className="items-center gap-1 rounded-xl py-3" style={{ backgroundColor: colors.positiveSoft }}>
+              <View className="flex-row items-center gap-1.5">
+                <Icon name="check-circle" size={16} color={colors.positive} />
+                <Text className="font-body-semibold text-[14px]" style={{ color: colors.positive }}>
+                  Checked in for today
+                </Text>
+              </View>
+              <Text className="font-mono text-[12px]" style={{ color: colors.positive }}>
+                Next check-in in {nextCheckIn}
               </Text>
             </View>
           ) : (
