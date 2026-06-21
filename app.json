@@ -6,9 +6,11 @@
     "orientation": "portrait",
     "scheme": "trialcrew",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F6FA"
+      "backgroundColor": "#FAFAF9"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -20,7 +22,8 @@
     "android": {
       "package": "app.trialcrew.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#F5F6FA"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4F46E5"
       }
     },
     "web": {

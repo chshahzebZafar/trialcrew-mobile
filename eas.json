@@ -9,7 +9,15 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_USE_BACKEND": "true",
+        "EXPO_PUBLIC_API_URL": "https://trialcrew-backend.onrender.com",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bWFnbmV0aWMtZWVsLTcwLmNsZXJrLmFjY291bnRzLmRldiQ"
+      }
     },
     "production": {
       "autoIncrement": true
