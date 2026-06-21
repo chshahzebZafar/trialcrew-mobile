@@ -200,6 +200,18 @@ export function useSubmitApp() {
   });
 }
 
+export function useUpdateApp(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SubmitAppInput) => api.updateApp(id, input),
+    meta: { localError: true },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.founderApps });
+      qc.invalidateQueries({ queryKey: qk.founderApp(id) });
+    },
+  });
+}
+
 function useFounderAppInvalidation() {
   const qc = useQueryClient();
   return (id: string) => {
@@ -238,6 +250,18 @@ export function useEndCohort(id: string) {
       invalidate(id);
       qc.invalidateQueries({ queryKey: qk.enrollments(id) });
       qc.invalidateQueries({ queryKey: qk.founderStats });
+    },
+  });
+}
+
+export function useSeedTestEnrollments(id: string) {
+  const invalidate = useFounderAppInvalidation();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (count?: number) => api.seedTestEnrollments(id, count),
+    onSuccess: () => {
+      invalidate(id);
+      qc.invalidateQueries({ queryKey: qk.enrollments(id) });
     },
   });
 }

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { useSubmitApp } from "@/api/hooks";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFounderApp, useSubmitApp, useUpdateApp } from "@/api/hooks";
 import { apiErrorMessage } from "@/api/config";
 import { colors } from "@/theme/tokens";
 import { TextField } from "@/components/TextField";
@@ -17,7 +17,11 @@ const REWARDS: RewardType[] = ["PREMIUM_ACCESS", "CREDITS", "STIPEND"];
 
 export default function SubmitApp() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editing = !!id;
   const submit = useSubmitApp();
+  const update = useUpdateApp(id ?? "");
+  const { data: existing } = useFounderApp(id ?? "");
 
   const [name, setName] = useState("");
   const [packageName, setPackageName] = useState("");
@@ -28,6 +32,18 @@ export default function SubmitApp() {
   const [reward, setReward] = useState<RewardType>("PREMIUM_ACCESS");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Edit mode: prefill from the existing app once it loads.
+  useEffect(() => {
+    if (!existing) return;
+    setName(existing.name);
+    setPackageName(existing.packageName);
+    setVertical(existing.vertical);
+    setFeedbackFocus(existing.feedbackFocus);
+    setDescription(existing.description ?? "");
+    setPlayStoreUrl(existing.playStoreUrl ?? "");
+    setReward(existing.rewardType);
+  }, [existing]);
 
   const onSubmit = async () => {
     const next: Record<string, string> = {};
@@ -47,19 +63,21 @@ export default function SubmitApp() {
     if (Object.keys(next).length) return;
 
     setFormError(null);
+    const input = {
+      name: name.trim(),
+      packageName: packageName.trim(),
+      vertical: vertical.trim(),
+      feedbackFocus: feedbackFocus.trim(),
+      description: description.trim() || undefined,
+      playStoreUrl: url,
+      rewardType: reward,
+    };
     try {
-      await submit.mutateAsync({
-        name: name.trim(),
-        packageName: packageName.trim(),
-        vertical: vertical.trim(),
-        feedbackFocus: feedbackFocus.trim(),
-        description: description.trim() || undefined,
-        playStoreUrl: url,
-        rewardType: reward,
-      });
+      if (editing) await update.mutateAsync(input);
+      else await submit.mutateAsync(input);
       router.back();
     } catch (e) {
-      setFormError(apiErrorMessage(e, "Couldn't create the app. Please check your details and try again."));
+      setFormError(apiErrorMessage(e, "Couldn't save the app. Please check your details and try again."));
     }
   };
 
@@ -82,10 +100,12 @@ export default function SubmitApp() {
       >
         <View className="gap-1.5">
           <Text className="font-display text-[24px]" style={{ color: colors.ink, letterSpacing: -0.6 }}>
-            Submit an app
+            {editing ? "Edit app" : "Submit an app"}
           </Text>
           <Text className="font-body text-[14px] leading-[20px]" style={{ color: colors.slate }}>
-            We'll match you with vetted testers in your field for a genuine 14-day closed test.
+            {editing
+              ? "Update your app details before you publish and open enrolment."
+              : "We'll match you with vetted testers in your field for a genuine 14-day closed test."}
           </Text>
         </View>
 
@@ -184,11 +204,11 @@ export default function SubmitApp() {
           </Text>
         )}
         <PrimaryButton
-          label="Create draft app"
+          label={editing ? "Save changes" : "Create draft app"}
           variant="accent"
-          icon="plus"
+          icon={editing ? "check" : "plus"}
           onPress={onSubmit}
-          loading={submit.isPending}
+          loading={submit.isPending || update.isPending}
         />
       </FormScroll>
     </SafeAreaView>

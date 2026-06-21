@@ -349,6 +349,10 @@ export const mockApi = {
     return delay(clone(enrolls.filter((e) => e.appId === appId)));
   },
 
+  seedTestEnrollments(appId: string, _count?: number): Promise<Enrollment[]> {
+    return delay(clone(enrolls.filter((e) => e.appId === appId)));
+  },
+
   getEnrollment(id: string): Promise<Enrollment | null> {
     return delay(clone(enrolls.find((e) => e.id === id) ?? null));
   },
@@ -372,6 +376,19 @@ export const mockApi = {
     apps = [app, ...apps];
     fStats = { ...fStats, appsSubmitted: fStats.appsSubmitted + 1 };
     return delay(clone(app), 500);
+  },
+
+  async updateApp(id: string, input: SubmitAppInput): Promise<FounderApp> {
+    const app = apps.find((a) => a.id === id);
+    if (!app) throw new Error("App not found");
+    app.name = input.name.trim();
+    app.packageName = input.packageName.trim();
+    app.vertical = input.vertical.trim();
+    app.feedbackFocus = input.feedbackFocus.trim();
+    app.description = input.description?.trim();
+    app.playStoreUrl = input.playStoreUrl?.trim();
+    app.rewardType = input.rewardType;
+    return delay(clone(app), 400);
   },
 
   /** Publish a DRAFT app: set target + start date, open enrollment. */

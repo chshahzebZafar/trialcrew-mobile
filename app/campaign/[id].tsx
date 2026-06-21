@@ -11,6 +11,7 @@ import {
   useFounderApp,
   useMarkInvited,
   usePublishApp,
+  useSeedTestEnrollments,
   useSendBroadcast,
 } from "@/api/hooks";
 import { colors } from "@/theme/tokens";
@@ -100,6 +101,7 @@ export default function CampaignDetail() {
   const publish = usePublishApp(appId);
   const invite = useMarkInvited(appId);
   const endCohort = useEndCohort(appId);
+  const seedTesters = useSeedTestEnrollments(appId);
   const exportEmails = useExportEmails(appId);
   const { data: broadcasts } = useBroadcasts(app?.packageName ?? "");
   const sendBroadcast = useSendBroadcast(app?.packageName ?? "");
@@ -151,6 +153,21 @@ export default function CampaignDetail() {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View className="flex-row items-center justify-between px-5 pb-1 pt-2">
+        <PressableScale onPress={() => router.back()}>
+          <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}>
+            <Icon name="arrow-left" size={20} color={colors.ink} />
+          </View>
+        </PressableScale>
+        {isDraft && (
+          <PressableScale onPress={() => router.push({ pathname: "/submit-app", params: { id: appId } })}>
+            <View className="flex-row items-center gap-1.5 rounded-full px-3.5 py-2" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}>
+              <Icon name="edit-3" size={14} color={colors.ink} />
+              <Text className="font-body-medium text-[13px]" style={{ color: colors.ink }}>Edit</Text>
+            </View>
+          </PressableScale>
+        )}
+      </View>
       <FormScroll
         contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.indigo} colors={[colors.indigo]} />}
@@ -323,9 +340,24 @@ export default function CampaignDetail() {
 
           {/* Enrolled testers */}
           <View className="gap-3">
-            <Text className="font-body text-[12px]" style={{ color: colors.slate }}>
-              Enrolled testers ({enrolls?.length ?? 0})
-            </Text>
+            <View className="flex-row items-center justify-between">
+              <Text className="font-body text-[12px]" style={{ color: colors.slate }}>
+                Enrolled testers ({enrolls?.length ?? 0})
+              </Text>
+              {app.status === "ENROLLING" && (
+                <Pressable
+                  onPress={() => seedTesters.mutate(undefined)}
+                  disabled={seedTesters.isPending}
+                  className="flex-row items-center gap-1.5 rounded-lg px-2.5 py-1.5"
+                  style={{ backgroundColor: colors.sand, borderWidth: 1, borderColor: colors.line }}
+                >
+                  <Icon name="users" size={13} color={colors.slate} />
+                  <Text className="font-body-medium text-[11.5px]" style={{ color: colors.inkSoft }}>
+                    {seedTesters.isPending ? "Adding…" : "Fill to target (test)"}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
             <Card className="gap-1 p-4">
               {(enrolls ?? []).map((e, i) => (
                 <View key={e.id}>

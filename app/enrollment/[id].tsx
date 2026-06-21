@@ -1,10 +1,11 @@
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEnrollment, useRateEnrollment } from "@/api/hooks";
 import { colors } from "@/theme/tokens";
 import { BadgePill } from "@/components/Badge";
 import { CycleStatusPill } from "@/components/StatusPill";
+import { PressableScale } from "@/components/PressableScale";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { Card, Divider } from "@/components/ui";
 import { Icon } from "@/components/Icon";
@@ -21,6 +22,7 @@ const FEEDBACK = [
 
 export default function EnrollmentDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { data: e, isLoading } = useEnrollment(id ?? "");
   const rate = useRateEnrollment();
 
@@ -32,6 +34,13 @@ export default function EnrollmentDetail() {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View className="flex-row items-center px-5 pb-1 pt-2">
+        <PressableScale onPress={() => router.back()}>
+          <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}>
+            <Icon name="arrow-left" size={20} color={colors.ink} />
+          </View>
+        </PressableScale>
+      </View>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 44 }} showsVerticalScrollIndicator={false}>
         {/* Header */}
       <View className="flex-row items-center gap-3">
