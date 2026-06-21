@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RefreshControl, Share, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, RefreshControl, Share, Text, TextInput, View } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { FormScroll } from "@/components/FormScroll";
@@ -196,6 +196,33 @@ export default function CycleDetail() {
           {cycle.campaign.feedbackFocus}
         </Text>
       </View>
+
+      {/* Featured Play Console install link (set when the founder starts the cohort) */}
+      {!!cycle.campaign.testLink && (
+        <Pressable onPress={() => Linking.openURL(cycle.campaign.testLink!).catch(() => {})}>
+          <View className="gap-1 rounded-2xl p-4" style={{ backgroundColor: colors.indigo }}>
+            <View className="flex-row items-center gap-2">
+              <Icon name="external-link" size={16} color={colors.white} />
+              <Text className="font-body-semibold text-[14px]" style={{ color: colors.white }}>
+                Install via Play Console
+              </Text>
+            </View>
+            <Text className="font-body text-[12px]" numberOfLines={1} style={{ color: "rgba(255,255,255,0.85)" }}>
+              {cycle.campaign.testLink}
+            </Text>
+          </View>
+        </Pressable>
+      )}
+
+      {/* Waiting for the founder to start the cohort */}
+      {isMatched && (
+        <View className="flex-row items-start gap-2 rounded-xl p-3.5" style={{ backgroundColor: colors.sand }}>
+          <Icon name="clock" size={15} color={colors.slate} />
+          <Text className="flex-1 font-body text-[13px] leading-[18px]" style={{ color: colors.inkSoft }}>
+            You're in! Your 14-day cycle starts when the founder kicks off the cohort — everyone begins together, same days. We'll notify you.
+          </Text>
+        </View>
+      )}
 
       {/* Share */}
       {(isActive || isComplete) && (

@@ -54,6 +54,7 @@ export interface Campaign {
   testersMatched: number;
   rewardType: RewardType;
   playStoreUrl?: string;
+  testLink?: string;
 }
 
 export interface CheckIn {
@@ -125,6 +126,7 @@ export interface FounderApp {
   description?: string;
   feedbackFocus: string;
   playStoreUrl?: string;
+  testLink?: string; // Play Console closed-test join link (set on Start)
   status: FounderAppStatus;
   rewardType: RewardType; // what testers earn on completion
   minTesters: number; // founder-chosen target (12 / 16 / 20)

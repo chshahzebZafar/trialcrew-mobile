@@ -221,10 +221,23 @@ export function useMarkInvited(id: string) {
   const invalidate = useFounderAppInvalidation();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api.markInvited(id),
+    mutationFn: (testLink?: string) => api.markInvited(id, testLink),
     onSuccess: () => {
       invalidate(id);
       qc.invalidateQueries({ queryKey: qk.enrollments(id) });
+    },
+  });
+}
+
+export function useEndCohort(id: string) {
+  const invalidate = useFounderAppInvalidation();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.endCohort(id),
+    onSuccess: () => {
+      invalidate(id);
+      qc.invalidateQueries({ queryKey: qk.enrollments(id) });
+      qc.invalidateQueries({ queryKey: qk.founderStats });
     },
   });
 }

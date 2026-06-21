@@ -59,7 +59,8 @@ export const realApi: Api = {
   submitApp: (input) => http<FounderApp>("/apps", { json: input }),
   publishApp: (id, input) => http<FounderApp>(`/apps/${id}/publish`, { json: input }),
   exportEmails: (appId) => http<string[]>(`/apps/${appId}/emails`),
-  markInvited: (id) => http<FounderApp>(`/apps/${id}/invited`, { method: "POST" }),
+  markInvited: (id, testLink) => http<FounderApp>(`/apps/${id}/invited`, { json: { testLink } }),
+  endCohort: (id) => http<FounderApp>(`/apps/${id}/end`, { method: "POST" }),
   rateTester: (rowId) => http<FounderTesterRow>(`/testers/${rowId}/rate`, { method: "POST" }),
   rateEnrollment: (id) => http<Enrollment>(`/enrollments/${id}/rate`, { method: "POST" }),
 

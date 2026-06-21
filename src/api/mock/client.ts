@@ -395,13 +395,21 @@ export const mockApi = {
   },
 
   /** Mark the cohort invited — the 14-day test begins. */
-  async markInvited(id: string): Promise<FounderApp> {
+  async markInvited(id: string, testLink?: string): Promise<FounderApp> {
     const app = apps.find((a) => a.id === id);
     if (!app) throw new Error("App not found");
     app.status = "INVITED";
+    if (testLink !== undefined) app.testLink = testLink;
     enrolls
       .filter((e) => e.appId === id && e.status === "ENROLLED")
       .forEach((e) => (e.status = "TESTING"));
+    return delay(clone(app), 400);
+  },
+
+  async endCohort(id: string): Promise<FounderApp> {
+    const app = apps.find((a) => a.id === id);
+    if (!app) throw new Error("App not found");
+    app.status = "COMPLETE";
     return delay(clone(app), 400);
   },
 

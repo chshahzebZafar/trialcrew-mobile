@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   useBroadcasts,
+  useEndCohort,
   useEnrollments,
   useExportEmails,
   useFounderApp,
@@ -98,6 +99,7 @@ export default function CampaignDetail() {
   const { data: enrolls } = useEnrollments(appId);
   const publish = usePublishApp(appId);
   const invite = useMarkInvited(appId);
+  const endCohort = useEndCohort(appId);
   const exportEmails = useExportEmails(appId);
   const { data: broadcasts } = useBroadcasts(app?.packageName ?? "");
   const sendBroadcast = useSendBroadcast(app?.packageName ?? "");
@@ -106,6 +108,16 @@ export default function CampaignDetail() {
   const [startDays, setStartDays] = useState(0);
   const [message, setMessage] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [testLink, setTestLink] = useState("");
+  const [startError, setStartError] = useState<string | null>(null);
+
+  const startCohort = () => {
+    const raw = testLink.trim();
+    const url = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw;
+    if (!/^https?:\/\/[^\s.]+\.[^\s]{2,}/i.test(url)) return setStartError("Paste your Play Console closed-test link");
+    setStartError(null);
+    invite.mutate(url);
+  };
 
   const qc = useQueryClient();
   const onRefresh = async () => {
@@ -252,12 +264,27 @@ export default function CampaignDetail() {
                   </Text>
                 )}
                 {ready && app.status === "ENROLLING" && (
-                  <PrimaryButton label="Mark invited & start test" variant="accent" icon="check" onPress={() => invite.mutate()} loading={invite.isPending} />
+                  <View className="gap-2">
+                    <Text className="font-body-medium text-[13px]" style={{ color: colors.slate }}>Play Console closed-test link</Text>
+                    <TextInput
+                      value={testLink}
+                      onChangeText={setTestLink}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                      placeholder="https://play.google.com/apps/testing/..."
+                      placeholderTextColor={colors.slate}
+                      className="rounded-[10px] bg-white p-3 font-body text-[14px]"
+                      style={{ color: colors.ink, borderWidth: 1, borderColor: colors.line }}
+                    />
+                    {startError && <Text className="font-body text-[12px]" style={{ color: colors.danger }}>{startError}</Text>}
+                    <PrimaryButton label="Start cohort — invite all & begin" variant="accent" icon="check" onPress={startCohort} loading={invite.isPending} />
+                  </View>
                 )}
                 <View className="flex-row items-start gap-2 rounded-xl p-3" style={{ backgroundColor: colors.indigoSoft }}>
                   <Icon name="lock" size={14} color={colors.indigoInk} />
                   <Text className="flex-1 font-body text-[12px] leading-[17px]" style={{ color: colors.indigoInk }}>
-                    Add these Gmails as testers in Play Console, then mark invited — the 14-day test begins on the start date.
+                    Add these Gmails in Play Console, paste the closed-test link, then start — every tester begins the same 14-day cycle together.
                   </Text>
                 </View>
               </View>
@@ -271,6 +298,27 @@ export default function CampaignDetail() {
           {/* Cohort analytics (test running) */}
           {app.status === "INVITED" && (enrolls?.length ?? 0) > 0 && (
             <CohortHealth enrollments={enrolls ?? []} startDate={app.startDate} />
+          )}
+
+          {/* Cohort controls (running) */}
+          {app.status === "INVITED" && (
+            <View className="gap-3">
+              {!!app.testLink && (
+                <Pressable onPress={() => Share.share({ message: `Join the ${app.name} closed test on Google Play: ${app.testLink}` })}>
+                  <View className="flex-row items-center gap-2 rounded-xl p-3.5" style={{ backgroundColor: colors.indigoSoft }}>
+                    <Icon name="external-link" size={15} color={colors.indigoInk} />
+                    <Text className="flex-1 font-body-medium text-[12.5px]" numberOfLines={1} style={{ color: colors.indigoInk }}>
+                      {app.testLink}
+                    </Text>
+                    <Icon name="share-2" size={15} color={colors.indigoInk} />
+                  </View>
+                </Pressable>
+              )}
+              <PrimaryButton label="End cycle & pay rewards" variant="primary" icon="check-circle" onPress={() => endCohort.mutate()} loading={endCohort.isPending} />
+              <Text className="font-body text-[12px]" style={{ color: colors.slate }}>
+                End after day 14 — each tester's reward is released automatically.
+              </Text>
+            </View>
           )}
 
           {/* Enrolled testers */}
