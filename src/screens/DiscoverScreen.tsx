@@ -1,7 +1,9 @@
-import { FlatList, Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useBrowseCampaigns, useCycles, useOptIn, useProfile } from "@/api/hooks";
 import { colors, gradients } from "@/theme/tokens";
 import { CampaignCard } from "@/components/CampaignCard";
@@ -30,6 +32,20 @@ function StatTile({ icon, value, label, tone }: { icon: IconName; value: string;
   );
 }
 
+function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className="rounded-full px-3.5 py-2"
+      style={{ backgroundColor: active ? colors.ink : colors.card, borderWidth: 1, borderColor: active ? colors.ink : colors.line }}
+    >
+      <Text className="font-body-medium text-[12.5px]" style={{ color: active ? colors.white : colors.inkSoft }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 /** Tester dashboard — modern: topbar, active-cycle spotlight, stat bento, app list. */
 export function DiscoverScreen() {
   const router = useRouter();
@@ -38,7 +54,25 @@ export function DiscoverScreen() {
   const { data: profile } = useProfile();
   const optIn = useOptIn();
 
-  const count = campaigns?.length ?? 0;
+  const qc = useQueryClient();
+  const [filter, setFilter] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([qc.invalidateQueries({ queryKey: ["browse"] }), qc.invalidateQueries({ queryKey: ["cycles"] })]);
+    setRefreshing(false);
+  };
+
+  const all = campaigns ?? [];
+  const interests = new Set([profile?.vertical, ...(profile?.categories ?? [])].filter(Boolean) as string[]);
+  const verticals = Array.from(new Set(all.map((c) => c.vertical)));
+  const filtered = !filter
+    ? all
+    : filter === "__foryou"
+      ? all.filter((c) => interests.has(c.vertical))
+      : all.filter((c) => c.vertical === filter);
+  const total = all.length;
+  const shown = filtered.length;
   const active = (cycles ?? []).find((c) => c.status === "ACTIVE");
   const activeDay = active?.optInAt
     ? Math.min(14, Math.max(1, Math.floor((Date.now() - new Date(active.optInAt).getTime()) / DAY) + 1))
@@ -51,10 +85,11 @@ export function DiscoverScreen() {
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.bg }}>
       <FlatList
-        data={campaigns ?? []}
+        data={filtered}
         keyExtractor={(c) => c.id}
         contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: 36 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.indigo} colors={[colors.indigo]} />}
         ListHeaderComponent={
           <View className="gap-5 pb-1">
             <AView entering={fadeIn(0)}>
@@ -118,23 +153,36 @@ export function DiscoverScreen() {
               <View className="flex-row gap-3">
                 <StatTile icon="shield" value={`${Math.round((profile?.reliabilityScore ?? 0) * 100)}%`} label="Reliability" tone={colors.positive} />
                 <StatTile icon="check-circle" value={`${profile?.completedCycles ?? 0}`} label="Completed" tone={colors.indigo} />
-                <StatTile icon="grid" value={`${count}`} label="To test" tone={colors.gold} />
+                <StatTile icon="grid" value={`${total}`} label="To test" tone={colors.gold} />
               </View>
             </AView>
 
             {/* Section header */}
             <View className="flex-row items-center justify-between pt-1">
               <Text className="font-display text-[18px]" style={{ color: colors.ink, letterSpacing: -0.4 }}>
-                Apps in your field
+                Browse apps
               </Text>
-              {count > 0 && (
+              {shown > 0 && (
                 <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: colors.indigoSoft }}>
                   <Text className="font-mono text-[11px]" style={{ color: colors.indigoInk }}>
-                    {count}
+                    {shown}
                   </Text>
                 </View>
               )}
             </View>
+
+            {/* Filters */}
+            {(verticals.length > 1 || interests.size > 0) && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                <FilterChip label="All" active={!filter} onPress={() => setFilter(null)} />
+                {interests.size > 0 && (
+                  <FilterChip label="For you" active={filter === "__foryou"} onPress={() => setFilter("__foryou")} />
+                )}
+                {verticals.map((v) => (
+                  <FilterChip key={v} label={v} active={filter === v} onPress={() => setFilter(v)} />
+                ))}
+              </ScrollView>
+            )}
           </View>
         }
         renderItem={({ item, index }) => (

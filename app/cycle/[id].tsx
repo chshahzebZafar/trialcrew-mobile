@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { RefreshControl, Text, TextInput, View } from "react-native";
+import { RefreshControl, Share, Text, TextInput, View } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { FormScroll } from "@/components/FormScroll";
+import { PressableScale } from "@/components/PressableScale";
 import {
   useBroadcasts,
   useClaimReward,
@@ -171,6 +172,12 @@ export default function CycleDetail() {
     updateEmail.mutate(emailDraft, { onSuccess: () => setEditingEmail(false) });
   };
 
+  const shareCycle = () => {
+    Share.share({
+      message: `I'm testing ${cycle.campaign.appName} on TrialCrew — a genuine 14-day closed test (day ${today}/14). #TrialCrew #AppTesting`,
+    }).catch(() => {});
+  };
+
   return (
     <FormScroll
       backgroundColor={colors.porcelain}
@@ -189,6 +196,16 @@ export default function CycleDetail() {
           {cycle.campaign.feedbackFocus}
         </Text>
       </View>
+
+      {/* Share */}
+      {(isActive || isComplete) && (
+        <PressableScale onPress={shareCycle}>
+          <View className="flex-row items-center justify-center gap-2 rounded-xl py-2.5" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}>
+            <Icon name="share-2" size={15} color={colors.indigo} />
+            <Text className="font-body-semibold text-[13.5px]" style={{ color: colors.indigo }}>Share your cycle</Text>
+          </View>
+        </PressableScale>
+      )}
 
       {/* Play Store email (editable) */}
       {!isMatched && (
