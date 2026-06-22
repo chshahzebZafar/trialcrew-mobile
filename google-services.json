@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "330116289953",
+    "project_id": "trialcrew-975e5",
+    "storage_bucket": "trialcrew-975e5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:330116289953:android:9e011524f52f078f63e7e0",
+        "android_client_info": {
+          "package_name": "com.digiqraft.trialcrew"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLSfEcfjJmX6OhhgUbWUbHJSdUiXwtvCs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
