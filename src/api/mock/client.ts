@@ -166,6 +166,10 @@ export const mockApi = {
     return delay({ ok: true } as const);
   },
 
+  sendTestPush(): Promise<{ ok: true; sent: number; hasToken: boolean }> {
+    return delay({ ok: true, sent: 0, hasToken: false } as const);
+  },
+
   setRole(_isFounder: boolean, _isProfessional: boolean): Promise<{ ok: true }> {
     return delay({ ok: true } as const);
   },

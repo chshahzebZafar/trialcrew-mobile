@@ -35,6 +35,7 @@ export const realApi: Api = {
   updateProfile: (input) => http<TesterProfile>("/me/profile", { method: "PATCH", json: input }),
   getFeedbackQuestions: () => http<FeedbackQuestion[]>("/feedback/questions"),
   setPushToken: (token) => http<{ ok: true }>("/me/push-token", { json: { token } }),
+  sendTestPush: () => http<{ ok: true; sent: number; hasToken: boolean }>("/me/test-push", { method: "POST" }),
   setRole: (isFounder, isProfessional) => http<{ ok: true }>("/me/role", { json: { isFounder, isProfessional } }),
   getNotifications: () => http<AppNotification[]>("/me/notifications"),
   markNotificationsRead: () => http<AppNotification[]>("/me/notifications/read", { method: "POST" }),

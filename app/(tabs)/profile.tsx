@@ -1,7 +1,11 @@
-import { ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useFounderStats, useProfile } from "@/api/hooks";
+import { api } from "@/api/client";
+import { apiErrorMessage } from "@/api/config";
+import { registerPushToken } from "@/lib/push";
 import { useAuth } from "@/lib/auth";
 import { useRole } from "@/stores/roleStore";
 import { colors } from "@/theme/tokens";
@@ -44,6 +48,25 @@ export default function ProfileScreen() {
   const role = useRole();
   const router = useRouter();
   const isFounder = role === "FOUNDER";
+  const [pushBusy, setPushBusy] = useState(false);
+
+  const testNotifications = async () => {
+    setPushBusy(true);
+    try {
+      const token = await registerPushToken();
+      if (token) await api.setPushToken(token);
+      const res = await api.sendTestPush();
+      if (!res.hasToken) {
+        Alert.alert("Enable notifications", "No push token yet. Grant notification permission when prompted (works in a dev/standalone build, not Expo Go), then tap again.");
+      } else {
+        Alert.alert("Test sent ✓", "A test notification was sent to this device — it should arrive in a few seconds.");
+      }
+    } catch (e) {
+      Alert.alert("Couldn't send", apiErrorMessage(e));
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   if (isLoading || !profile) {
     return <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} />;
@@ -91,6 +114,14 @@ export default function ProfileScreen() {
           <View className="flex-row items-center justify-center gap-2 rounded-xl py-2.5" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}>
             <Icon name="edit-3" size={15} color={colors.ink} />
             <Text className="font-body-semibold text-[14px]" style={{ color: colors.ink }}>Edit profile</Text>
+          </View>
+        </PressableScale>
+
+        {/* Test notifications */}
+        <PressableScale onPress={testNotifications} disabled={pushBusy}>
+          <View className="flex-row items-center justify-center gap-2 rounded-xl py-2.5" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line }}>
+            <Icon name="bell" size={15} color={colors.indigo} />
+            <Text className="font-body-semibold text-[14px]" style={{ color: colors.indigo }}>{pushBusy ? "Sending…" : "Test notifications"}</Text>
           </View>
         </PressableScale>
 
